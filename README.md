@@ -19,7 +19,9 @@ The API is pretty simple. The arguments to `adstage.pluck-api/pluck` are
 
 The API is extended via implemting the `adstage.pluck-helper/-pluck` multimethod.
 
-## Datalog Query
+## Examples
+
+### Datalog Query
 
 Say we want to query some data from a dashboard that is stored in `:db/txInstant`
 datom.
@@ -37,7 +39,7 @@ datom.
 ;=> {:dashboard/title "FooBar" :dashboard/org-time #inst "2016-08-20T22:10:26.652-00:00"}
 ```
 
-## External Blob Store
+### External Blob Store
 
 Datomic is not built for storing large blobs of data so we often use and external blob store.
 This also poses a problem for the pull API but we can get around that like so.
@@ -53,7 +55,7 @@ This also poses a problem for the pull API but we can get around that like so.
 ;=> {:db/id 17592186182360 :data-source/current-stream large-blob}
 ```
 
-## Caching
+### Caching
 
 We also have a simple macro that will only execute its body if the target key is not passed into
 the initial result. Useful for when you are querying over a collection of entities and want to pre-fetch
