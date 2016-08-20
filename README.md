@@ -23,7 +23,7 @@ The API is extended via implemting the `adstage.pluck-helper/-pluck` multimethod
 
 ### Datalog Query
 
-Say we want to query some data from a dashboard that is stored in `:db/txInstant`
+Say we want to query some data from a dashboard that is stored in the `:db/txInstant`
 datom.
 
 ```clojure
@@ -41,7 +41,7 @@ datom.
 
 ### External Blob Store
 
-Datomic is not built for storing large blobs of data so we often use and external blob store.
+Datomic is not built for storing large blobs of data, so we often use an external blob store.
 This also poses a problem for the pull API but we can get around that like so.
 
 ```clojure
