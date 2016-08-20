@@ -2,7 +2,7 @@
   :resource-paths #{"src"}
   :source-paths #{"test"}
   :dependencies '[[org.clojure/clojure "1.8.0"         :scope "provided"]
-                  [com.datomic/datomic-free "0.9.5206" :scope "test" :exclusions [joda-time]]
+                  [com.datomic/datomic-free "0.9.5206" :scope "provided"]
                   [adzerk/boot-test    "1.1.0"         :scope "test"]])
 
 (require '[adzerk.boot-test :refer [test]])
