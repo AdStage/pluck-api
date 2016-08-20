@@ -15,7 +15,7 @@ the pull API with multimethods.
 The API is pretty simple. The arguments to `adstage.pluck-api/pluck` are
 - `env` a map with stuff like a Datomic db, foreign blob store etc.
 - `pattern` pull API pattern with extra keys used by the pluck API.
-- `eid-or-map` if Datomic entity id then `datomic.api/pull` is used to get the intial result, or you can pass in a map as initial result.
+- `eid-or-map` if Datomic entity id then `datomic.api/pull` is used to get the intial result, or you can pass in a map as the initial result.
 
 The API is extended via implemting the `adstage.pluck-helper/-pluck` multimethod.
 
