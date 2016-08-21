@@ -30,8 +30,7 @@
 
 (defn pluck
   "A more generic version of the datomic.api/pull. Takes an environment
-  as the first argument, you can either pass in a datomic value or database
-  component (priority given to former).
+  as the first argument.
   Second argument is a pull style query. Third argument is an entity id or
   entity map (from a previous pull/pluck call).
   Specific key lookup is implemented via -pluck multimethod. Default case is
