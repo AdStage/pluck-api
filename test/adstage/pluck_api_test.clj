@@ -27,7 +27,7 @@
                          :widget/data-source {:data-source/owner {:db/id 17592186045435}}}]
                        :dashboard/author {:user/first-name "Clark"}}]
       (is (= init-result
-             (p/pick {} query init-result)))))
+             (p/pluck {} query init-result)))))
 
   (testing "Extending with a foreign blob store."
     (let [query       [{:dashboard/widgets [{:widget/data-source [:db/id :data-source/blob]}]}]
@@ -42,12 +42,12 @@
                 {:db/id :db/id-1 :data-source/blob "first-blob"}}
                {:widget/data-source
                 {:db/id :db/id-2 :data-source/blob "second-blob"}}]}
-             (p/pick {:blob-store blob-store} query init-result)))))
+             (p/pluck {:blob-store blob-store} query init-result)))))
 
   (testing "Cached extension should only be called if key missing from init-result."
     (let [query       [:dashboard/refreshed-at]
           init-result {:dashboard/refreshed-at #inst "2016-08-20T22:10:26.652-00:00"}]
       (is (= {:dashboard/refreshed-at #inst "2016-08-20T22:10:26.652-00:00"}
-             (p/pick {} query init-result)))
+             (p/pluck {} query init-result)))
       (is (thrown-with-msg? Exception #"dashboard\/refreshed-at"
-                            (p/pick {} query {}))))))
+                            (p/pluck {} query {}))))))
