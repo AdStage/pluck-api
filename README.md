@@ -24,8 +24,7 @@ The API is extended via implemting the `adstage.pluck-helper/-pluck` multimethod
 ### Datalog Query
 
 ```clojure
-(require '[adstage.pluck-api :refer [pluck]]
-         '[adstage.pluck-helper :refer [defmethod-cached -pluck]])
+(require '[adstage.pluck-api :refer [defmethod-cached -pluck pluck]])
 ```
 
 Say we want to query some data from a dashboard that is stored in the `:db/txInstant`
