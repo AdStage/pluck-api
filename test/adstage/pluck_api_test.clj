@@ -1,12 +1,11 @@
 (ns adstage.pluck-api-test
-  (:require [adstage.pluck-api :as p]
-            [adstage.pluck-helper :refer [defmethod-cached] :as h]
+  (:require [adstage.pluck-api :as p :refer [defmethod-cached]]
             [clojure.test :refer :all]))
 
-(defmethod h/-pluck :data-source/blob [k {store :blob-store} {eid :db/id}]
+(defmethod p/-pluck :data-source/blob [k {store :blob-store} {eid :db/id}]
   (store eid))
 
-(defmethod-cached h/-pluck :dashboard/refreshed-at [k env init-result]
+(defmethod-cached p/-pluck :dashboard/refreshed-at [k env init-result]
   (throw
    (Exception. "Should never get here if :dashboard/refreshed-at is passed in.")))
 
