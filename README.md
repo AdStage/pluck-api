@@ -1,7 +1,7 @@
 # pluck-api
 An small extensible wrapper around Datomic's pull API using multimethods.
 
-[![Clojars Project](https://img.shields.io/clojars/v/pluck-api.svg)](https://clojars.org/pluck-api)
+[![Clojars Project](https://img.shields.io/clojars/v/adstage/pluck-api.svg)](https://clojars.org/adstage/pluck-api)
 
 # Usage
 
