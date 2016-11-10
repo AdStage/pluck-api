@@ -1,9 +1,22 @@
+(remove-ns 'adstage.pluck-api-test)
 (ns adstage.pluck-api-test
   (:require [adstage.pluck-api :as p :refer [defmethod-cached]]
             [clojure.test :refer :all]))
 
 (defmethod p/-pluck :data-source/blob [k {store :blob-store} {eid :db/id}]
   (store eid))
+
+(defmethod p/-pluck-many :dashboard/created-at [k env results]
+  (let [ids (map :db/id results)]
+    [ids (java.util.Date.)]))
+
+(let [init-results [{:db/id           17592186057566
+                     :dashboard/title "dash1"}
+                    {:db/id           17592186057566
+                     :dashboard/title "dash1"}]]
+  (p/pluck-many {:db {}} [:db/id :dashboard/title :dashboard/created-at]
+                init-results)
+  )
 
 (defmethod-cached p/-pluck :dashboard/refreshed-at [k env init-result]
   (throw
