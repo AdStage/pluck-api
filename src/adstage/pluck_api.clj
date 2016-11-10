@@ -82,43 +82,75 @@
                       (d/pull db pattern eid-or-map))]
     (pick env pattern init-result)))
 
-(defn pick-many
-  [env pattern init-results]
-  (let [key-cols (->> pattern
-                      (map (fn [k]
-                             (cond
-                               (keyword? k) (let [coll (map k init-results)]
-                                              (if (every? #(not (nil? %)) coll)
-                                                (map #(-> [k %]) coll)
-                                                (map #(-> [k %]) (-pluck-many k env init-results))))))))
-        ]
-    #_(let [k-v-cols (map (fn [[k vs]]
-                          (map #(-> [k %]) vs))
-                        (inspect key-cols))]
-      ;; TODO assert all cols are same size.
-      (apply map (fn [& args]
-                   (into {} args)) k-v-cols)
-      )
-    key-cols
-    ))
-
-(defn pluck-many
-  [{:keys [db] :as env} pattern eids-or-maps]
-  (let [init-results (if (every? map? eids-or-maps)
-                      eids-or-maps
-                      (d/pull-many db pattern eids-or-maps))]
-    (pick-many env pattern init-results)))
-
 (defmethod -pluck-many :dashboard/created-at [k env results]
   (let [ids (map :db/id results)]
     (map (fn [id]
            [id (java.util.Date.)]) ids)))
 
+(defn -pluck-many? [k]
+  (contains? (methods -pluck-many) k))
+
+(defn -pluck-many-wrapper [k env init-results]
+  (mapv (fn [[eid v]]
+          {eid {k v}})
+        (-pluck-many k env init-results)))
+
+(defn pick-many [env pattern init-results]
+  (let [grouped-results (->> (group-by :db/id init-results)
+                             (map (fn [[k ms]] [k (first ms)]))
+                             (into {}))
+        plucked-results (->> pattern
+                             (mapcat (fn [k]
+                                       (cond
+                                         (keyword? k) (if (-pluck-many? k)
+                                                        (-pluck-many-wrapper k env init-results))
+
+                                         (and (map? k)
+                                              (some vector? (map #(get % (-> k keys first)) init-results)))
+                                         (mapv #(pick-many env (-> k vals first) %)
+                                               (map #(get % (-> k keys first)) init-results))
+
+                                         (and (map? k)
+                                              (some identity (map #(get % (-> k keys first)) init-results)))
+                                         (pick-many env (-> k vals first)
+                                                    (map #(get % (-> k keys first)) init-results))
+
+                                         (and (map? k)
+                                              (every? nil? (map #(get % (-> k keys first)) init-results)))
+                                         [])))
+                             (filter identity))
+
+        merged-results (apply merge-with merge grouped-results plucked-results)]
+    (mapv (fn [[k v]] v) merged-results)))
+
+(defn pluck-many
+  [{:keys [db] :as env} pattern eids-or-maps]
+  (let [init-results (if (every? map? eids-or-maps)
+                       eids-or-maps
+                       (d/pull-many db pattern eids-or-maps))]
+    (pick-many env pattern init-results)))
+
+{:dashboard/widgets
+ [{:db/id              17592186057566
+   :widget/title       "Unnamed"
+   :widget/data-source {:data-source/owner {:db/id 17592186045435}}}
+  {:db/id              17592186057638
+   :widget/title       "Metered Metrics"
+   :widget/data-source {:data-source/owner {:db/id 17592186045435}}}]
+ :dashboard/author {:user/first-name "Clark"}}
+
+
 (let [init-results [{:db/id           17592186057566
+                     :dashboard/author {:user/first-name "Clark"}
                      :dashboard/title "dash1"}
                     {:db/id           17592186088888
                      :dashboard/title "dash2"}]
-      pattern [:db/id :dashboard/title
-               :dashboard/created-at
-               ]]
-  (pluck-many {:db {}} pattern init-results))
+      pattern      [:db/id :dashboard/title :dashboard/created-at
+                    ;; {:dashboard/author [:user/first-name]}
+                    ;; {:dashboard/widgets
+                    ;;  [:db/id :widget/title
+                    ;;   {:widget/data-source [:data-source/owner]}]}
+                    ]
+      env          {}]
+  (pick-many env pattern init-results))
+
