@@ -106,18 +106,16 @@
                                                         (-pluck-many-wrapper k env init-results))
 
                                          (and (map? k)
-                                              (some vector? (map #(get % (-> k keys first)) init-results)))
-                                         (mapv #(pick-many env (-> k vals first) %)
-                                               (map #(get % (-> k keys first)) init-results))
-
-                                         (and (map? k)
                                               (some identity (map #(get % (-> k keys first)) init-results)))
-                                         (pick-many env (-> k vals first)
-                                                    (map #(get % (-> k keys first)) init-results))
-
-                                         (and (map? k)
-                                              (every? nil? (map #(get % (-> k keys first)) init-results)))
-                                         [])))
+                                         (let [sub-default-results (map (fn [{eid :db/id :as ir}]
+                                                                          [eid (get ir (-> k keys first))]) init-results)
+                                               sub-query           (-> k vals first)
+                                               sub-results         (mapv (fn [[eid sub-init-result]]
+                                                                           {eid {(-> k keys first)
+                                                                                 (pick env sub-query sub-init-result)}})
+                                                                         sub-default-results)]
+                                           sub-results
+                                           ))))
                              (filter identity))
 
         merged-results (apply merge-with merge grouped-results plucked-results)]
@@ -129,28 +127,3 @@
                        eids-or-maps
                        (d/pull-many db pattern eids-or-maps))]
     (pick-many env pattern init-results)))
-
-{:dashboard/widgets
- [{:db/id              17592186057566
-   :widget/title       "Unnamed"
-   :widget/data-source {:data-source/owner {:db/id 17592186045435}}}
-  {:db/id              17592186057638
-   :widget/title       "Metered Metrics"
-   :widget/data-source {:data-source/owner {:db/id 17592186045435}}}]
- :dashboard/author {:user/first-name "Clark"}}
-
-
-(let [init-results [{:db/id           17592186057566
-                     :dashboard/author {:user/first-name "Clark"}
-                     :dashboard/title "dash1"}
-                    {:db/id           17592186088888
-                     :dashboard/title "dash2"}]
-      pattern      [:db/id :dashboard/title :dashboard/created-at
-                    ;; {:dashboard/author [:user/first-name]}
-                    ;; {:dashboard/widgets
-                    ;;  [:db/id :widget/title
-                    ;;   {:widget/data-source [:data-source/owner]}]}
-                    ]
-      env          {}]
-  (pick-many env pattern init-results))
-
