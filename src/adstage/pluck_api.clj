@@ -70,22 +70,15 @@
        (into {})))
 
 (defn pluck
-  "A more generic version of the datomic.api/pull. Takes an environment
-  as the first argument.
-  Second argument is a pull style query. Third argument is an entity id or
-  entity map (from a previous pull/pluck call).
-  Specific key lookup is implemented via -pluck multimethod. Default case is
-  datomic.api/pull."
+  "An extensible wrapper around `datomic.api/pull`. Takes an environment as the
+  first argument. Second argument is a pull style query. Third argument is an
+  entity id or entity map (from a previous pull/pluck call). Specific key lookup
+  is implemented via `-pluck` multimethod. Default case is `datomic.api/pull`."
   [{:keys [db] :as env} pattern eid-or-map]
   (let [init-result (if (map? eid-or-map)
                       eid-or-map
                       (d/pull db pattern eid-or-map))]
     (pick env pattern init-result)))
-
-(defmethod -pluck-many :dashboard/created-at [k env results]
-  (let [ids (map :db/id results)]
-    (map (fn [id]
-           [id (java.util.Date.)]) ids)))
 
 (defn -pluck-many? [k]
   (contains? (methods -pluck-many) k))
@@ -95,7 +88,10 @@
           {eid {k v}})
         (-pluck-many k env init-results)))
 
-(defn pick-many [env pattern init-results]
+(defn pick-many
+  "Recursively annotates the init-result with values supplied from the
+  `-pluck-many` multimethod for root level keys and `-pluck` for sub queries."
+  [env pattern init-results]
   (let [grouped-results (->> (group-by :db/id init-results)
                              (map (fn [[k ms]] [k (first ms)]))
                              (into {}))
@@ -121,6 +117,17 @@
     (mapv (fn [[k v]] v) merged-results)))
 
 (defn pluck-many
+  "An extensible wrapper around `datomic.api/pull-many`. First argument is an
+  environment as the first argument.
+
+  Second argument is a pull style query. Every entity must have :db/id in its
+  query.
+
+  Third argument is a collection of entity ids or entity maps.
+
+  The default key lookup `datomic.api/pull-many`. But it can be overridden by
+  implementing `-pluck-many` multimethod. Not this multimethod is only used for
+  root level keys. Nested queries are processed with `-pluck` multimethod."
   [{:keys [db] :as env} pattern eids-or-maps]
   (let [init-results (if (every? map? eids-or-maps)
                        eids-or-maps
