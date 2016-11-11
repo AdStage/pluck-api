@@ -22,15 +22,6 @@
 (defmethod -pluck :default [k env init-result]
   (get init-result k))
 
-(defmulti -pluck-many
-  "Multimethod for extending datomic.api/pull, while still maintaining the ability
-  to let the query decied what is actually fetched."
-  (fn [k env init-results] k))
-
-;; Default case just delivers what datomic.api/pull gives you.
-(defmethod -pluck-many :default [k env init-results]
-  (->> init-results (r/map #(get % k)) (into [])))
-
 (defmacro defmethod-cached
   "Wrap the -pluck multimethod with some basic caching based on its
   third argument, the accumulated init-result."
@@ -80,6 +71,12 @@
                       (d/pull db pattern eid-or-map))]
     (pick env pattern init-result)))
 
+(defmulti -pluck-many
+  "Multimethod for extending datomic.api/pull-many. The return
+  value must be a collection of tuples.
+  `[entity-id pluck-value]`"
+  (fn [k env init-results] k))
+
 (defn -pluck-many? [k]
   (contains? (methods -pluck-many) k))
 
@@ -120,7 +117,7 @@
   "An extensible wrapper around `datomic.api/pull-many`. First argument is an
   environment as the first argument.
 
-  Second argument is a pull style query. Every entity must have :db/id in its
+  Second argument is a pull style query. The root entity must have :db/id in its
   query.
 
   Third argument is a collection of entity ids or entity maps.
