@@ -114,8 +114,7 @@
                                                                            {eid {(-> k keys first)
                                                                                  (pick env sub-query sub-init-result)}})
                                                                          sub-default-results)]
-                                           sub-results
-                                           ))))
+                                           sub-results))))
                              (filter identity))
 
         merged-results (apply merge-with merge grouped-results plucked-results)]

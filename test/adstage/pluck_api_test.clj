@@ -71,17 +71,44 @@
                :dashboard/created-at #inst "2016-11-10T22:36:38.210-00:00"}]
              (p/pluck-many {} query init-resutls)))))
 
-  (testing "Nested pluck-many cardinality one."
+  (testing "Nested pluck-many."
     (let [query        [:db/id :dashboard/title {:dashboard/author [:db/id :user/first-name]}]
           init-resutls [{:db/id            1
                          :dashboard/title  "Such Dashing Wow!!!"
+                         :dashboard/widgets
+                         [{:db/id              17592186057566
+                           :widget/title       "Unnamed"
+                           :widget/data-source {:data-source/owner {:db/id 17592186045435}}}
+                          {:db/id              17592186057638
+                           :widget/title       "Metered Metrics"
+                           :widget/data-source {:data-source/owner {:db/id 17592186045435}}}]
                          :dashboard/author {:db/id 2 :user/first-name "Clark"}}
                         {:db/id            4
                          :dashboard/title  "Such barking Wow!!!"
+                         :dashboard/widgets
+                         [{:db/id              17592186057566
+                           :widget/title       "Unnamed"
+                           :widget/data-source {:data-source/owner {:db/id 17592186045435}}}
+                          {:db/id              17592186057638
+                           :widget/title       "Metered Metrics"
+                           :widget/data-source {:data-source/owner {:db/id 17592186045435}}}]
                          :dashboard/author {:db/id 5 :user/first-name "Bark"}}]]
       (is (= [{:db/id            1 :dashboard/title "Such Dashing Wow!!!"
+               :dashboard/widgets
+               [{:db/id              17592186057566
+                 :widget/title       "Unnamed"
+                 :widget/data-source {:data-source/owner {:db/id 17592186045435}}}
+                {:db/id              17592186057638
+                 :widget/title       "Metered Metrics"
+                 :widget/data-source {:data-source/owner {:db/id 17592186045435}}}]
                :dashboard/author {:db/id 2 :user/first-name "Clark"}}
               {:db/id            4 :dashboard/title "Such barking Wow!!!"
+               :dashboard/widgets
+               [{:db/id              17592186057566
+                 :widget/title       "Unnamed"
+                 :widget/data-source {:data-source/owner {:db/id 17592186045435}}}
+                {:db/id              17592186057638
+                 :widget/title       "Metered Metrics"
+                 :widget/data-source {:data-source/owner {:db/id 17592186045435}}}]
                :dashboard/author {:db/id 5 :user/first-name "Bark"}}]
-             (p/pluck-many {} query init-resutls)))))
-  )
+             (p/pluck-many {} query init-resutls))))))
