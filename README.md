@@ -12,7 +12,8 @@ cases the pull API is not sufficient. `datomic.api/q` does the job
 but it is not ideal for things like client-side co-located queries in Om.Next.
 
 With the `pluck-api` we retain the power of client-side queries by extending
-the pull API with multimethods.
+the pull API with multimethods. It also gives you a clean way to consistently
+organize your datomic queries.
 
 The API is pretty simple. The arguments to `adstage.pluck-api/pluck` are
 - `env` a map with stuff like a Datomic db, foreign blob store etc.
@@ -21,12 +22,16 @@ The API is pretty simple. The arguments to `adstage.pluck-api/pluck` are
 
 The API is extended via implemting the `adstage.pluck-helper/-pluck` multimethod.
 
+The API also has a `adstage.pluck-api/pluck-many` function and `adstage.pluck-helper/-pluck-many`
+multimethod. These are analogous to the regular pluck function but wrap around `pluck-many`. They
+have slightly different requirements, detailed below.
+
 ## Examples
 
 ### Datalog Query
 
 ```clojure
-(require '[adstage.pluck-api :refer [defmethod-cached -pluck pluck]])
+(require '[adstage.pluck-api :refer [defmethod-cached -pluck pluck -pluck-many pluck-many]])
 ```
 
 Say we want to query some data from a dashboard that is stored in the `:db/txInstant`
@@ -43,6 +48,19 @@ datom.
        
 (pluck {:db db} [:dashboard/title :dashboard/org-time] dash-eid)
 ;=> {:dashboard/title "FooBar" :dashboard/org-time #inst "2016-08-20T22:10:26.652-00:00"}
+
+(defmethod -pluck-many :dashboard/org-time [k {db :db} dashboards]
+  (->> (d/q '[:find  ?d ?created-at
+              :in    $ [?d ...]
+              :where [?d :dashboard/organization _ ?org-tx _] 
+                     [?org-tx :db/txInstant ?created-at]]
+            db
+            (map :db/id dashboards))
+       (into [])))
+       
+(pluck-many {:db db} [:db/id :dashboard/title :dashboard/org-time] [d1 d2])
+;=> [{:db/id d1 :dashboard/title "FooBar" :dashboard/org-time #inst "2016-08-20T22:10:26.652-00:00"}
+     {:db/id d2 :dashboard/title "BarFoo" :dashboard/org-time #inst "2016-08-21T22:10:26.652-00:00"}]
 ```
 
 ### External Blob Store
@@ -57,8 +75,22 @@ This also poses a problem for the pull API but we can get around that like so.
         uuid            (:data-stream/id data-stream)]
     (data-stream/find-by-id blob-store uuid)))
     
-(pluck {:db db :blob-store blob-store} [:db/id :data-source/current-stream] data-source-eid)
-;=> {:db/id 17592186182360 :data-source/current-stream large-blob}
+(pluck {:db db :blob-store blob-store} [:db/id :data-source/current-stream] ds-eid)
+;=> {:db/id ds-eid :data-source/current-stream large-blob}
+
+(defmethod -pluck-many :data-source/current-stream
+  [k {:keys [db blob-store]} data-sources]
+  (let [data-streams     (map #(-> (d/entity db %) :data-source/current-stream)
+                              data-sources)
+        id-tuples        (map (fn [{eid :db/id id :data-stream/id}]
+                                [eid id])
+                              data-stream)]
+    ;; Returns tuples [eid blob-value]
+    (data-stream/find-by-ids blob-store id-tuples)))
+    
+(pluck-many {:db db :blob-store blob-store} [:db/id :data-source/current-stream] [ds1 ds2])
+;=> [{:db/id ds1 :data-source/current-stream large-blob}
+     {:db/id ds2 :data-source/current-stream other-large-blob}]
 ```
 
 ### Caching
