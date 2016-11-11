@@ -60,7 +60,7 @@ datom.
        
 (pluck-many {:db db} [:db/id :dashboard/title :dashboard/org-time] [d1 d2])
 ;=> [{:db/id d1 :dashboard/title "FooBar" :dashboard/org-time #inst "2016-08-20T22:10:26.652-00:00"}
-     {:db/id d2 :dashboard/title "BarFoo" :dashboard/org-time #inst "2016-08-21T22:10:26.652-00:00"}]
+;=>  {:db/id d2 :dashboard/title "BarFoo" :dashboard/org-time #inst "2016-08-21T22:10:26.652-00:00"}]
 ```
 
 ### External Blob Store
@@ -90,7 +90,7 @@ This also poses a problem for the pull API but we can get around that like so.
     
 (pluck-many {:db db :blob-store blob-store} [:db/id :data-source/current-stream] [ds1 ds2])
 ;=> [{:db/id ds1 :data-source/current-stream large-blob}
-     {:db/id ds2 :data-source/current-stream other-large-blob}]
+;=>  {:db/id ds2 :data-source/current-stream other-large-blob}]
 ```
 
 ### Caching
