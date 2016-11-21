@@ -1,6 +1,15 @@
 (ns adstage.pluck-api
-  (:require
-   [datomic.api :as d]))
+  (:require [datomic.api :as d]))
+
+(defn- inspect-1 [expr]
+  `(let [result# ~expr]
+     (println)
+     (print (str (pr-str '~expr) " => "))
+     (clojure.pprint/pprint result#)
+     result#))
+
+(defmacro inspect [& exprs]
+  `(do ~@(map inspect-1 exprs)))
 
 (defmulti -pluck
   "Multimethod for extending datomic.api/pull, while still maintaining the ability
@@ -28,24 +37,26 @@
   multimethod."
   [env pattern init-result]
   (->> pattern
-       (map (fn [k]
-              [(cond
-                 (keyword? k) k
-                 (map? k)     (-> k keys first))
-               (cond
-                 (keyword? k) (-pluck k env init-result)
+       (mapcat (fn [k]
+                 (if (= '* k)
+                   (into [] init-result)
+                   [[(cond
+                       (keyword? k) k
+                       (map? k)     (-> k keys first))
+                     (cond
+                       (keyword? k) (-pluck k env init-result)
 
-                 (and (map? k)
-                      (vector? (get init-result (-> k keys first))))
-                 (mapv #(pick env (-> k vals first) %) (get init-result (-> k keys first)))
+                       (and (map? k)
+                            (vector? (get init-result (-> k keys first))))
+                       (mapv #(pick env (-> k vals first) %) (get init-result (-> k keys first)))
 
-                 (and (map? k)
-                      (get init-result (-> k keys first)))
-                 (pick env (-> k vals first) (get init-result (-> k keys first)))
+                       (and (map? k)
+                            (get init-result (-> k keys first)))
+                       (pick env (-> k vals first) (get init-result (-> k keys first)))
 
-                 (and (map? k)
-                      (nil? (get init-result (-> k keys first))))
-                 [])]))
+                       (and (map? k)
+                            (nil? (get init-result (-> k keys first))))
+                       [])]])))
        (into {})))
 
 (defn pluck
