@@ -9,6 +9,9 @@
   (throw
    (Exception. "Should never get here if :dashboard/refreshed-at is passed in.")))
 
+(defmethod p/-pluck :dashboard/created-at [k env init-result]
+  #inst "2016-11-21T21:10:09.585-00:00")
+
 (deftest pluck-api-test
   (testing "Basic nested Datomic pull result traversal, no pluck extension."
     (let [query       [:dashboard/title
@@ -30,6 +33,7 @@
 
   (testing "Extending with a foreign blob store."
     (let [query       '[* :dashboard/title
+                        :dashboard/created-at
                         {:dashboard/widgets [{:widget/data-source [:db/id :data-source/blob]}]}]
           init-result {:dashboard/title "foobar"
                        :dashboard/widgets
@@ -38,7 +42,8 @@
 
           blob-store {:db/id-1 "first-blob"
                       :db/id-2 "second-blob"}]
-      (is (= {:dashboard/title "foobar"
+      (is (= {:dashboard/title      "foobar"
+              :dashboard/created-at #inst "2016-11-21T21:10:09.585-00:00"
               :dashboard/widgets
               [{:widget/data-source
                 {:db/id :db/id-1 :data-source/blob "first-blob"}}
@@ -133,22 +138,22 @@
                          [* {:user-file/format        [*]
                              :user-file/file-meta     [* {:file-meta/root ...
                                                           :file-meta/body [*]}]
-                             :user-file/file-versions [* {:file-versions/file-metas      [* {:file-meta/root ...
-                                                                                             :file-meta/body [*]}]
-                                                          :file-versions/body [*]
-                                                          :file-versions/format    [*]}]
+                             :user-file/file-versions [* {:file-versions/file-metas [* {:file-meta/root ...
+                                                                                        :file-meta/body [*]}]
+                                                          :file-versions/body       [*]
+                                                          :file-versions/format     [*]}]
                              :user-file/user-content  [*]}]}
                       {:access/user-file-groups [* {:user-file-group/user-files
-                                                       [* {:user-file/format       [*]
-                                                           :user-file/file-meta
-                                                           [* {:file-meta/root ...
-                                                               :file-meta/body [*]}]
-                                                           :user-file/file-versions
-                                                           [* {:file-versions/file-metas      [* {:file-meta/root ...
-                                                                                                  :file-meta/body [*]}]
-                                                               :file-versions/body [*]
-                                                               :file-versions/format    [*]}]
-                                                           :user-file/user-content [*]}]}]}]}]}
+                                                    [* {:user-file/format       [*]
+                                                        :user-file/file-meta
+                                                        [* {:file-meta/root ...
+                                                            :file-meta/body [*]}]
+                                                        :user-file/file-versions
+                                                        [* {:file-versions/file-metas [* {:file-meta/root ...
+                                                                                          :file-meta/body [*]}]
+                                                            :file-versions/body       [*]
+                                                            :file-versions/format     [*]}]
+                                                        :user-file/user-content [*]}]}]}]}]}
                   {:user/user-token-providers [*]}]
 
 
@@ -158,11 +163,11 @@
                        :user/first-name "foobar",
                        :user/last-name  "foobar",
                        :user/access-rights
-                       [{:db/id               277076930208295,
+                       [{:db/id             277076930208295,
                          :access-right/id   #uuid "5807f09b-5472-4d3d-a3cd-c9053695ce80",
                          :access-right/role :default,
                          :access-right/access
-                         {:db/id                   277076930208297,
+                         {:db/id                 277076930208297,
                           :access/id             #uuid "574f7e5c-9e0b-41b9-88f7-e69b3729f16e",
                           :access/address-line-1 "foobar",
                           :access/user-file-groups
@@ -183,7 +188,7 @@
                                 :file-meta/id   #uuid "5727d2de-452e-4a41-9235-f1f63b501565",
                                 :file-meta/name "foobar"}},
                               :user-file/format
-                              {:db/id             277076930207550,
+                              {:db/id       277076930207550,
                                :format/id   #uuid "5727d2de-6c83-4e01-bdd9-239933dfa31b",
                                :format/name "foobar"},
                               :user-file/model-number      "foobar",
@@ -196,18 +201,18 @@
                                :file-versions/id            #uuid "5727d2de-9e24-4ea9-a338-c46c3b989128",
                                :file-versions/model-number  "foobar",
                                :file-versions/format
-                               {:db/id             277076930207550,
+                               {:db/id       277076930207550,
                                 :format/id
                                 #uuid "5727d2de-6c83-4e01-bdd9-239933dfa31b",
                                 :format/name "foobar"},
                                :file-versions/body
-                               [{:db/id                         277076930207703
+                               [{:db/id              277076930207703
                                  ,
                                  :body/id
                                  #uuid "5727d2de-cbd8-4cd3-a248-0b51a47fbc99",
                                  :body/semantic-type :photograph,
                                  :body/body-binaries
-                                 [{:db/id                               277076930207704,
+                                 [{:db/id                    277076930207704,
                                    :body-binary/id
                                    #uuid "5727d2de-6562-471e-a1e3-2ea15d84d194",
                                    :body-binary/purpose      :original,
@@ -235,7 +240,7 @@
                                :file-versions/id           #uuid "5807b64a-986d-488c-ba45-8ee8383b1c2a",
                                :file-versions/model-number "foobar",
                                :file-versions/format
-                               {:db/id             277076930207624,
+                               {:db/id       277076930207624,
                                 :format/id
                                 #uuid "5807b679-d8c1-4a5b-8e25-10e8e5a82b24",
                                 :format/name "foobar"},
@@ -257,7 +262,7 @@
                                :file-versions/id           #uuid "5807b32a-7cda-4204-9417-9b4562b97274",
                                :file-versions/model-number "foobar",
                                :file-versions/format
-                               {:db/id             277076930207609,
+                               {:db/id       277076930207609,
                                 :format/id
                                 #uuid "5727d2de-9dcd-46e0-82c7-54bb07eceb78",
                                 :format/name "foobar"},
@@ -276,26 +281,26 @@
                                    #uuid "58215743-93e0-4abb-adf7-c69483b89923",
                                    :body/semantic-type :nameplate-help-photo,
                                    :body/title         "foobar",
-                                   :body/description "foobar",
+                                   :body/description   "foobar",
                                    :body/body-binaries
-                                   [{:db/id                          277076930208635,
+                                   [{:db/id                   277076930208635,
                                      :body-binary/id
                                      #uuid "58215743-f86f-4e4d-874a-0c1448bfcf81",
-                                     :body-binary/purpose :original,
+                                     :body-binary/purpose     :original,
                                      :body-binary/remote-file "foobar"}],
                                    :body/sort-order    0}
-                                  {:db/id                         277076930208637,
-                                   :body/id #uuid "58215743-466f-45e8-b5b5-38ba2ebae686",
+                                  {:db/id              277076930208637,
+                                   :body/id            #uuid "58215743-466f-45e8-b5b5-38ba2ebae686",
                                    :body/semantic-type :nameplate-help-video,
-                                   :body/title "foobar",
-                                   :body/description "foobar",
-                                   :body/link "foobar",
+                                   :body/title         "foobar",
+                                   :body/description   "foobar",
+                                   :body/link          "foobar",
                                    :body/sort-order    1}]}]}}]}]}}
-                        {:db/id               277076930208296,
+                        {:db/id             277076930208296,
                          :access-right/id   #uuid "574f7e54-e765-4d3f-a596-9aef8b0f6f45",
                          :access-right/role :sponsor,
                          :access-right/access
-                         {:db/id                   277076930208297,
+                         {:db/id                 277076930208297,
                           :access/id             #uuid "574f7e5c-9e0b-41b9-88f7-e69b3729f16e",
                           :access/address-line-1 "foobar",
                           :access/user-file-groups
@@ -317,7 +322,7 @@
                                 :file-meta/id   #uuid "5727d2de-452e-4a41-9235-f1f63b501565",
                                 :file-meta/name "foobar"}},
                               :user-file/format
-                              {:db/id             277076930207550,
+                              {:db/id       277076930207550,
                                :format/id   #uuid "5727d2de-6c83-4e01-bdd9-239933dfa31b",
                                :format/name "foobar"},
                               :user-file/model-number     "foobar",
@@ -331,17 +336,17 @@
                                :file-versions/model-number "foobar",
                                :file-versions/format
 
-                               {:db/id             277076930207550,
+                               {:db/id       277076930207550,
                                 :format/id
                                 #uuid "5727d2de-6c83-4e01-bdd9-239933dfa31b",
                                 :format/name "foobar"},
                                :file-versions/body
-                               [{:db/id                         277076930207703,
+                               [{:db/id              277076930207703,
                                  :body/id
                                  #uuid "5727d2de-cbd8-4cd3-a248-0b51a47fbc99",
                                  :body/semantic-type :photograph,
                                  :body/body-binaries
-                                 [{:db/id                               277076930207704,
+                                 [{:db/id                    277076930207704,
                                    :body-binary/id
                                    #uuid "5727d2de-6562-471e-a1e3-2ea15d84d194",
                                    :body-binary/purpose      :original,
@@ -369,7 +374,7 @@
                                :file-versions/id           #uuid "5807b64a-986d-488c-ba45-8ee8383b1c2a",
                                :file-versions/model-number "foobar",
                                :file-versions/format
-                               {:db/id             277076930207624,
+                               {:db/id       277076930207624,
                                 :format/id
                                 #uuid "5807b679-d8c1-4a5b-8e25-10e8e5a82b24",
                                 :format/name "foobar"},
@@ -391,7 +396,7 @@
                                :file-versions/id           #uuid "5807b32a-7cda-4204-9417-9b4562b97274",
                                :file-versions/model-number "foobar",
                                :file-versions/format
-                               {:db/id             277076930207609,
+                               {:db/id       277076930207609,
                                 :format/id
                                 #uuid "5727d2de-9dcd-46e0-82c7-54bb07eceb78",
                                 :format/name "foobar"},
@@ -404,7 +409,7 @@
                                   :file-meta/id   #uuid "5727d2de-452e-4a41-9235-f1f63b501565",
                                   :file-meta/name "foobar"},
                                  :file-meta/body
-                                 [{:db/id                         277076930208634,
+                                 [{:db/id              277076930208634,
                                    :body/id
                                    #uuid "58215743-93e0-4abb-adf7-c69483b89923",
                                    :body/semantic-type :nameplate-help-photo,
@@ -412,14 +417,14 @@
                                    :body/description
                                    "foobar",
                                    :body/body-binaries
-                                   [{:db/id                          277076930208635,
+                                   [{:db/id               277076930208635,
                                      :body-binary/id
                                      #uuid "58215743-f86f-4e4d-874a-0c1448bfcf81",
                                      :body-binary/purpose :original,
                                      :body-binary/remote-file
                                      "foobar"}],
                                    :body/sort-order    0}
-                                  {:db/id                         277076930208637,
+                                  {:db/id              277076930208637,
                                    :body/id
                                    #uuid "58215743-466f-45e8-b5b5-38ba2ebae686"
                                    ,
