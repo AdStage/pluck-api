@@ -100,4 +100,19 @@
                         :data-source/timeframe     "last_1_week"},
                        :widget/type   {:db/id 17592186055013},
                        :widget/layout {:layout/width "12"}}]
+      (is (= pull-result (p/pluck {} query pull-result)))))
+
+  (testing "Queies with ... work"
+    (let [query '[:organization/company-name
+                  {:organization/users [:db/id {:organization/_users ...}]}]
+
+          pull-result {:organization/company-name "AdStage"
+                       :organization/users
+                       [{:db/id 17592186045506
+                         :organization/_users [{:db/id 17592186045507}
+                                               {:organization/company-name "RadStage"
+                                                :organization/users
+                                                [{:db/id 17592186045506 :organization/_users [{:db/id 17592186045507}]}
+                                                 {:db/id 17592186045733 :organization/_users [{:db/id 17592186045507}]}]}]}
+                        {:db/id 17592186045733 :organization/_users [{:db/id 17592186045507}]}]}]
       (is (= pull-result (p/pluck {} query pull-result))))))

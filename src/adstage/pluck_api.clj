@@ -38,7 +38,8 @@
   [env pattern init-result]
   (->> pattern
        (mapcat (fn [k]
-                 (if (= '* k)
+                 (if (or (= '* k)
+                         (and (map? k) (= '... (-> k vals first))))
                    (into [] init-result)
                    [[(cond
                        (keyword? k) k
