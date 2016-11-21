@@ -57,7 +57,8 @@
 
                        (and (map? k)
                             (nil? (get init-result (-> k keys first))))
-                       [])]])))
+                       nil)]])))
+       (filterv (fn [[k v]] v))
        (into {})))
 
 (defn pluck
