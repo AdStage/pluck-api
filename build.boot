@@ -12,7 +12,7 @@
  '[boot.pod         :as pod]
  '[adzerk.boot-test :refer [test]])
 
-(def +version+ "0.1.0-SNAPSHOT")
+(def +version+ "0.2.0")
 
 (task-options!
   pom {:project     'adstage/pluck-api
