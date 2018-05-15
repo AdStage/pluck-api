@@ -11,12 +11,19 @@
     (map (fn [id]
            [id #inst "2016-11-10T22:36:38.210-00:00"]) ids)))
 
+(defmethod p/-pluck-many :dashboard/always-false [k env results]
+  (let [ids (map :db/id results)]
+    (map (fn [id] [id false]) ids)))
+
 (defmethod-cached p/-pluck :dashboard/refreshed-at [k env init-result]
   (throw
    (Exception. "Should never get here if :dashboard/refreshed-at is passed in.")))
 
 (defmethod p/-pluck :dashboard/created-at [k env init-result]
   #inst "2016-11-21T21:10:09.585-00:00")
+
+(defmethod p/-pluck :dashboard/always-false [k env init-result]
+  false)
 
 (def combination-complicated-pull-result
   {:db/id          277076930208294,
@@ -315,8 +322,9 @@
                        {:dashboard/widgets
                         [:db/id :widget/title
                          {:widget/data-source [:data-source/owner]}]}
-                       {:dashboard/author [:user/first-name]}]
-          init-result {:dashboard/title  "Such Dashing Wow!!!"
+                       {:dashboard/author [:user/first-name]}
+                       :dashboard/private]
+          init-result {:dashboard/title   "Such Dashing Wow!!!"
                        :dashboard/widgets
                        [{:db/id              17592186057566
                          :widget/title       "Unnamed"
@@ -324,7 +332,18 @@
                         {:db/id              17592186057638
                          :widget/title       "Metered Metrics"
                          :widget/data-source {:data-source/owner {:db/id 17592186045435}}}]
-                       :dashboard/author {:user/first-name "Clark"}}]
+                       :dashboard/author  {:user/first-name "Clark"}
+                       :dashboard/private false}]
+      (is (= init-result
+             (p/pluck {} query init-result)))))
+
+  (testing "Plucks falses"
+    (let [query       [:dashboard/title
+                       :dashboard/private
+                       :dashboard/always-false]
+          init-result {:dashboard/title        "Such Dashing Wow!!!"
+                       :dashboard/private      false
+                       :dashboard/always-false false}]
       (is (= init-result
              (p/pluck {} query init-result)))))
 
@@ -458,26 +477,31 @@
              (p/pluck {} query combination-complicated-pull-result)))))
 
   (testing "Shallow pluck-many with extension."
-    (let [query        [:db/id :dashboard/title :dashboard/created-at]
+    (let [query        [:db/id :dashboard/title :dashboard/created-at :dashboard/always-false]
           init-resutls [{:db/id           17592186057566
                          :dashboard/title "dash1"}
                         {:db/id           17592186088888
                          :dashboard/title "dash2"}]]
-      (is (= [{:db/id                17592186057566
-               :dashboard/title      "dash1"
-               :dashboard/created-at #inst "2016-11-10T22:36:38.210-00:00"}
-              {:db/id                17592186088888
-               :dashboard/title      "dash2"
-               :dashboard/created-at #inst "2016-11-10T22:36:38.210-00:00"}]
+      (is (= [{:db/id                  17592186057566
+               :dashboard/title        "dash1"
+               :dashboard/created-at   #inst "2016-11-10T22:36:38.210-00:00"
+               :dashboard/always-false false}
+              {:db/id                  17592186088888
+               :dashboard/title        "dash2"
+               :dashboard/created-at   #inst "2016-11-10T22:36:38.210-00:00"
+               :dashboard/always-false false}]
              (p/pluck-many {} query init-resutls)))))
 
   (testing "Nested pluck-many."
-    (let [query        [:db/id :dashboard/title :dashboard/created-at
+    (let [query        [:db/id
+                        :dashboard/title
+                        :dashboard/created-at
                         {:dashboard/author [:db/id :user/first-name]}
                         {:dashboard/widgets [:db/id :widget/title
-                                             {:widget/data-source [:data-source/owner]}]}]
-          init-resutls [{:db/id            1
-                         :dashboard/title  "Such Dashing Wow!!!"
+                                             {:widget/data-source [:data-source/owner]}]}
+                        :dashboard/private]
+          init-resutls [{:db/id             1
+                         :dashboard/title   "Such Dashing Wow!!!"
                          :dashboard/widgets
                          [{:db/id              17592186057566
                            :widget/title       "Unnamed"
@@ -485,9 +509,10 @@
                           {:db/id              17592186057638
                            :widget/title       "Metered Metrics"
                            :widget/data-source {:data-source/owner {:db/id 17592186045435}}}]
-                         :dashboard/author {:db/id 2 :user/first-name "Clark"}}
-                        {:db/id            4
-                         :dashboard/title  "Such barking Wow!!!"
+                         :dashboard/author  {:db/id 2 :user/first-name "Clark"}
+                         :dashboard/private false}
+                        {:db/id             4
+                         :dashboard/title   "Such barking Wow!!!"
                          :dashboard/widgets
                          [{:db/id              17592186057566
                            :widget/title       "Unnamed"
@@ -495,7 +520,8 @@
                           {:db/id              17592186057638
                            :widget/title       "Metered Metrics"
                            :widget/data-source {:data-source/owner {:db/id 17592186045435}}}]
-                         :dashboard/author {:db/id 5 :user/first-name "Bark"}}]]
+                         :dashboard/author  {:db/id 5 :user/first-name "Bark"}
+                         :dashboard/private true}]]
       (is (= [{:db/id                1
                :dashboard/title      "Such Dashing Wow!!!"
                :dashboard/created-at #inst "2016-11-10T22:36:38.210-00:00"
@@ -506,7 +532,8 @@
                 {:db/id              17592186057638
                  :widget/title       "Metered Metrics"
                  :widget/data-source {:data-source/owner {:db/id 17592186045435}}}]
-               :dashboard/author     {:db/id 2 :user/first-name "Clark"}}
+               :dashboard/author     {:db/id 2 :user/first-name "Clark"}
+               :dashboard/private    false}
               {:db/id                4
                :dashboard/title      "Such barking Wow!!!"
                :dashboard/created-at #inst "2016-11-10T22:36:38.210-00:00"
@@ -517,5 +544,6 @@
                 {:db/id              17592186057638
                  :widget/title       "Metered Metrics"
                  :widget/data-source {:data-source/owner {:db/id 17592186045435}}}]
-               :dashboard/author     {:db/id 5 :user/first-name "Bark"}}]
+               :dashboard/author     {:db/id 5 :user/first-name "Bark"}
+               :dashboard/private    true}]
              (p/pluck-many {} query init-resutls))))))

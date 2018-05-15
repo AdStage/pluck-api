@@ -3,9 +3,8 @@
 
 (defn- inspect-1 [expr]
   `(let [result# ~expr]
-     (println)
-     (print (str (pr-str '~expr) " => "))
-     (clojure.pprint/pprint result#)
+     (spit "debug.log" (str "\n" (pr-str '~expr) " => " (with-out-str (clojure.pprint/pprint result#)))
+           :append true)
      result#))
 
 (defmacro inspect [& exprs]
@@ -58,7 +57,7 @@
                        (and (map? k)
                             (nil? (get init-result (-> k keys first))))
                        nil)]])))
-       (filterv (fn [[k v]] v))
+       (filterv (fn [[k v]] (some? v)))
        (into {})))
 
 (defn pluck
